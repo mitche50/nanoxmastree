@@ -2,6 +2,8 @@ import asyncio
 import json
 import redis
 
+from tasks import print_message
+
 async def main():
     r = redis.StrictRedis(host='localhost', port=6379) 
     p = r.pubsub()
@@ -13,6 +15,7 @@ async def main():
 
         if message and message['type'] == 'message':
             json_data = json.loads(message['data'])
+            print_message.delay(json_data)
             print(f'Received notification that {json_data["sender"]} sent {json_data["amount"]} to the christmas tree account')
 
 try:
