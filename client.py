@@ -1,10 +1,17 @@
 import asyncio
 import json
 import redis
+import configparser
+
+config = configparser.ConfigParser()
+config.read('config.ini')
+
+REDIS_HOST = config.get('redis', 'host')
+REDIS_PORT = config.get('redis', 'port')
 
 
 async def main():
-    r = redis.StrictRedis(host='localhost', port=6379) 
+    r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT) 
     p = r.pubsub()
 
     p.subscribe('NanoXmasTree')

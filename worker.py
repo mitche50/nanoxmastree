@@ -1,8 +1,16 @@
 import redis
 import json
 import time
+import configparser
 
-r = redis.StrictRedis(host='localhost', port=6379) 
+config = configparser.ConfigParser()
+config.read('config.ini')
+
+REDIS_HOST = config.get('redis', 'host')
+REDIS_PORT = config.get('redis', 'port')
+
+
+r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT) 
 
 if __name__ == '__main__':
     processing = False
