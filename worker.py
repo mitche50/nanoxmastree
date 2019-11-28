@@ -8,9 +8,10 @@ config.read('config.ini')
 
 REDIS_HOST = config.get('redis', 'host')
 REDIS_PORT = config.get('redis', 'port')
+REDIS_PW = config.get('redis', 'pw')
 
 
-r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT) 
+r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, password=REDIS_PW) 
 
 if __name__ == '__main__':
     processing = False

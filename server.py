@@ -11,6 +11,9 @@ config.read('config.ini')
 WS_HOST = config.get('ws', 'host')
 WS_PORT = config.get('ws', 'port')
 TREE_ACCOUNT = config.get('nano', 'account')
+REDIS_HOST = config.get('redis', 'host')
+REDIS_PORT = config.get('redis', 'port')
+REDIS_PW = config.get('redis', 'pw')
 
 def subscription(topic: str, ack: bool=False, options: dict=None):
     data = {'action': 'subscribe', 'topic': topic, 'ack': ack}
@@ -23,7 +26,7 @@ async def main():
     options = {'accounts': [TREE_ACCOUNT]}
 
     # Set up the redis pub sub
-    r = redis.StrictRedis(host='localhost', port=6379) 
+    r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, password=REDIS_PW) 
 
     async with websockets.connect(f"ws://{WS_HOST}:{WS_PORT}") as websocket:
         await websocket.send(json.dumps(subscription("confirmation", ack=True, options=options)))
