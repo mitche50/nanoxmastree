@@ -1,9 +1,11 @@
+#!/home/pi/nanoxmastree/venv/bin/python3
+
 import redis
 import json
 import time
 import configparser
 
-from single import rainbow_cycle_successive, rainbow_cycle, brightness_decrease
+from single import purple_cycle_successive, purple_cycle, rainbow_colors, brightness_decrease, test_pixels, one_color_sparkle, rainbow_cycle, rainbow_cycle_successive, appear_from_back, rainbow_colors_alt, alt_red_green, snow
 import Adafruit_WS2801
 import Adafruit_GPIO.SPI as SPI
 import RPi.GPIO as GPIO
@@ -36,12 +38,43 @@ if __name__ == '__main__':
             json_data = json.loads(message_data)
             print(message_list)
             # We will send the message_list to the web server so it can display the correct information
-            # This is a dummy sleep task to simulate an animation
             print(f'Received notification that {json_data["sender"]} sent {json_data["amount"]} to the christmas tree account from redis queue')
             pixels.clear()
             pixels.show()
 
-            rainbow_cycle_successive(pixels, wait=0.01)
-            rainbow_cycle(pixels, wait=0.01)
+            adjusted_amount = json_data["amount"].replace("0", "")
+
+            if adjusted_amount[-1] == "1":
+                rainbow_colors(pixels, wait=0.05)
+                purple_cycle(pixels, wait=0.01)
+
+            elif adjusted_amount[-1] == "2":
+                one_color_sparkle(pixels, wait=0.05)
+                purple_cycle(pixels, wait=0.01)
+
+            elif adjusted_amount[-1] == "3":
+                rainbow_cycle(pixels, wait=0.05)
+                purple_cycle(pixels, wait=0.01)
+
+            elif adjusted_amount[-1] == "4":
+                rainbow_cycle_successive(pixels, wait=0.05)
+                purple_cycle(pixels, wait=0.01)
+
+            # elif adjusted_amount[-1] == "5":
+                # appear_from_back(pixels, wait=0.001)
+                # purple_cycle(pixels, wait=0.01)
+
+            elif adjusted_amount[-1] == "6":
+                alt_red_green(pixels, wait=1)
+                purple_cycle(pixels, wait=0.01)
+
+            elif adjusted_amount[-1] == "7":
+                snow(pixels, wait=0.5)
+                purple_cycle(pixels, wait=0.01)
+
+            # 5 = rainbow sparkle
+            else:
+                purple_cycle_successive(pixels, wait=0.01)
+                purple_cycle(pixels, wait=0.01)
         
-            brightness_decrease(pixels)
+            # brightness_decrease(pixels)

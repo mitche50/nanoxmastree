@@ -1,5 +1,5 @@
 # Simple demo of of the WS2801/SPI-like addressable RGB LED lights.
-import time
+import time, random
 import RPi.GPIO as GPIO
  
 # Import the WS2801 module.
@@ -26,7 +26,7 @@ def wheel(pos):
     else:
         pos -= 170
         return Adafruit_WS2801.RGB_to_color(0, pos * 3, 255 - pos * 3)
- 
+
 # Define rainbow cycle function to do a cycle of all hues.
 def rainbow_cycle_successive(pixels, wait=0.1):
     for i in range(pixels.count()):
@@ -47,10 +47,171 @@ def rainbow_cycle(pixels, wait=0.005):
         if wait > 0:
             time.sleep(wait)
  
-def rainbow_colors(pixels, wait=0.05):
+# Define rainbow cycle function to do a cycle of all hues.
+def purple_cycle_successive(pixels, wait=0.1):
+    for i in range(pixels.count()):
+        # tricky math! we use each pixel as a fraction of the full 96-color wheel
+        # (thats the i / strip.numPixels() part)
+        # Then add in j which makes the colors go around per pixel
+        # the % 96 is to make the wheel cycle around
+        pixels.set_pixel(i, Adafruit_WS2801.RGB_to_color(89, 17, 88))# wheel(((i * 256 // pixels.count())) % 256) )
+        pixels.show()
+        print(i)
+        if wait > 0:
+            time.sleep(wait)
+
+def one_color_sparkle(pixels, wait=0.05):
+    count = 0
+    while count <180:
+        for i in range(pixels.count()):
+            if random.getrandbits(1) == 1:
+                pixels.set_pixel_rgb(i, 89, 17, 88   )
+            else:
+                pixels.set_pixel_rgb(i, 0,0,0   )
+
+        pixels.show()
+        if wait > 0:
+            time.sleep(wait)
+        count = count + 1
+
+def snow(pixels, wait=0.5):
+    for i in range(0,50):
+        pixels.set_pixel_rgb(i, 255, 255, 255   )
+    pixels.show()
+
+    count = 0
+    while count <40:
+        for i in range(50, pixels.count()):
+            if random.getrandbits(2) == 1:
+                pixels.set_pixel_rgb(i, 255, 255, 255   )
+            else:
+                pixels.set_pixel_rgb(i, 0,0,0   )
+
+        pixels.show()
+        if wait > 0:
+            time.sleep(wait)
+        count = count + 1
+
+
+def snow_test(pixels, wait=1):
+    for i in range (31, 40):
+        pixels.set_pixel_rgb(i, 255, 255, 255   )
+    pixels.show()
+    time.sleep(wait)
+    #pixels.clear()
+    pixels.show()
+
+    for i in range (81, 90):
+        pixels.set_pixel_rgb(i, 255, 255, 255   )
+    pixels.show()
+    time.sleep(wait)
+    #pixels.clear()
+    pixels.show()
+
+    for i in range (91, 100):
+        pixels.set_pixel_rgb(i, 255, 255, 255   )
+    pixels.show()
+    time.sleep(wait)
+    #pixels.clear()
+    pixels.show()
+
+    for i in range (131, 140):
+        pixels.set_pixel_rgb(i, 255, 255, 255   )
+    pixels.show()
+    time.sleep(wait)
+    #pixels.clear()
+    pixels.show()
+
+    for i in range (161, 170):
+        pixels.set_pixel_rgb(i, 255, 255, 255   )
+    pixels.show()
+    time.sleep(wait)
+    #pixels.clear()
+    pixels.show()
+
+    for i in range (181, 190):
+        pixels.set_pixel_rgb(i, 255, 255, 255   )
+    pixels.show()
+    time.sleep(wait)
+    #pixels.clear()
+    pixels.show()
+
+    for i in range (191, 200):
+        pixels.set_pixel_rgb(i, 255, 255, 255   )
+    pixels.show()
+    time.sleep(wait)
+    #pixels.clear()
+    pixels.show()
+
+    for i in range (211, 220):
+        pixels.set_pixel_rgb(i, 255, 255, 255   )
+    pixels.show()
+    time.sleep(wait)
+    #pixels.clear()
+    pixels.show()
+
+
+
+def alt_red_green(pixels, wait=1):
+    count = 0
+    while count < 20:
+        if (count % 2) == 0:
+            for i in range(pixels.count()):
+                if (i % 2)  == 0:
+                    pixels.set_pixel_rgb(i, 255, 0, 0   )
+                else:
+                    pixels.set_pixel_rgb(i, 0,255,0   )
+        else:
+            for i in range(pixels.count()):
+                if (i % 2)  == 0:
+                    pixels.set_pixel_rgb(i, 0, 255, 0   )
+                else:
+                    pixels.set_pixel_rgb(i, 255,0,0   )
+
+        pixels.show()
+        if wait > 0:
+            time.sleep(wait)
+            count = count + 1
+
+def test_pixels(pixels, selected):
+    for i in range(pixels.count()):
+        pixels.set_pixel(i, Adafruit_WS2801.RGB_to_color(89, 17, 88))
+        pixels.show()
+        print(i)
+        time.sleep(2)
+
+
+def purple_cycle(pixels, wait=0.005):
+    for j in range(256): # one cycle of all 256 colors in the wheel
+        for i in range(pixels.count()):
+            pixels.set_pixel(i, Adafruit_WS2801.RGB_to_color(89, 17, 88)) #wheel(((i * 256 // pixels.count()) + j) % 256) )
+        pixels.show()
+        if wait > 0:
+            time.sleep(wait)
+ 
+def rainbow_colors(pixels, wait=0.005):
     for j in range(256): # one cycle of all 256 colors in the wheel
         for i in range(pixels.count()):
             pixels.set_pixel(i, wheel(((256 // pixels.count() + j)) % 256) )
+        pixels.show()
+        if wait > 0:
+            time.sleep(wait)
+
+def rainbow_colors_alt(pixels, wait=0.05):
+    count = 0
+    for j in range(256): # one cycle of all 256 colors in the wheel
+        count = count + 1
+        for i in range(pixels.count()):
+            if (i % 2) == 0:
+                pixels.set_pixel(i, wheel(((256 // pixels.count() + j)) % 256) )
+            else:
+                pixels.set_pixel_rgb(i, 0,0,0   )
+        #    else:
+        #        if (i % 2) == 0:
+        #            pixels.set_pixel_rgb(i, 0,0,0   )
+        #        else:
+        #            pixels.set_pixel(i, wheel(((256 // pixels.count() + j)) % 256) )
+
         pixels.show()
         if wait > 0:
             time.sleep(wait)
@@ -81,7 +242,7 @@ def blink_color(pixels, blink_times=5, wait=0.5, color=(255,0,0)):
             time.sleep(0.08)
         time.sleep(wait)
  
-def appear_from_back(pixels, color=(255, 0, 0)):
+def appear_from_back(pixels, color=(89, 17, 88), wait=0.001):
     pos = 0
     for i in range(pixels.count()):
         for j in reversed(range(i, pixels.count())):
@@ -92,7 +253,7 @@ def appear_from_back(pixels, color=(255, 0, 0)):
             # set then the pixel at position j
             pixels.set_pixel(j, Adafruit_WS2801.RGB_to_color( color[0], color[1], color[2] ))
             pixels.show()
-            time.sleep(0.02)
+            time.sleep(wait)
             
  
 if __name__ == "__main__":
@@ -102,7 +263,9 @@ if __name__ == "__main__":
       pixels.clear()
       pixels.show()  # Make sure to call show() after changing any pixels!
  
-      rainbow_cycle_successive(pixels, wait=0.01)
-      rainbow_cycle(pixels, wait=0.01)
+      # rainbow_cycle_successive(pixels, wait=0.01)
+      # rainbow_cycle(pixels, wait=0.01)
  
-      brightness_decrease(pixels)
+      # brightness_decrease(pixels)
+
+      test_pixels(pixels, [241,242,243,244,245,246,247,248,249])

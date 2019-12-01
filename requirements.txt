@@ -2,4 +2,4 @@ redis
 websockets
 Adafruit_WS2801
 Adafruit_GPIO
-RPi
+RPi.GPIO
