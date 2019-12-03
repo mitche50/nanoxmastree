@@ -1,5 +1,7 @@
 #!/root/nanoxmastree/venv/bin/python3
 
+from decimal import Decimal
+
 import asyncio
 import configparser
 import json
@@ -17,22 +19,16 @@ REDIS_HOST = config.get('redis', 'host')
 REDIS_PORT = config.get('redis', 'port')
 REDIS_PW = config.get('redis', 'pw')
 
+CONVERT_MULTIPLIER = {
+    'nano': 1000000000000000000000000000000,
+    'banano': 100000000000000000000000000000
+}
+
 def subscription(topic: str, ack: bool=False, options: dict=None):
     data = {'action': 'subscribe', 'topic': topic, 'ack': ack}
     if options is not None:
         data['options'] = options
     return data
-
-# async def redis_subscribe(p):
-#     p.subscribe('AnimationProcessing', )
-#     p.subscribe('PendingAnimations')
-
-#     while True:
-#         message = p.get_message()
-
-#         if message and message['type'] == 'message':
-#             json_message = json.loads(message['data'].decode('utf-8'))
-
 
 async def main():
     # Set up the redis pub sub
@@ -49,12 +45,22 @@ async def main():
             topic = rec.get("topic", None)
             if topic:
                 message = rec["message"]
-                if topic == "confirmation" and message['block']['subtype'] == 'send':
+                if topic == "confirmation" and message['block']['subtype'] == 'send': # and Decimal(message['amount']) >= (CONVERT_MULTIPLIER['nano']):
                     # We send a message to the redis pub sub to be handled by the client.
-                    ps_message = {'sender': message['account'], 'amount': message['amount']}
+                    amount = str(Decimal(message['amount']) / CONVERT_MULTIPLIER['nano'])
+                    print(amount)
+                    ps_message = {'sender': message['account'], 'amount': amount}
                     ps_string = json.dumps(ps_message)
-                    r.publish('NanoXmasTree', ps_string)
-                    r.lpush("animations", ps_string)
+                    r.rpush("animations", ps_string)
+
+                    message_list = r.lrange('animations', 0, 9)
+                    message_json_list = []
+                    for message in message_list:
+                        message_json_list.append(message.decode('utf-8'))
+                    
+                    message_list_str = json.dumps(message_json_list)
+                    r.publish('PendingAnimations', message_list_str)
+                    
 
 
 try:

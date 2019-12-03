@@ -24,7 +24,7 @@ async def main():
 
         if message and message['type'] == 'message':
             json_data = json.loads(message['data'])
-            r.lpush('XmasQueue', message['data'])
+            # r.rpush('animations', message['data'])
             print(f'Received notification that {json_data["sender"]} sent {json_data["amount"]} to the christmas tree account')
 
 try:
