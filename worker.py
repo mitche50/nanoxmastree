@@ -91,6 +91,6 @@ if __name__ == '__main__':
                 purple_cycle_successive(pixels, wait=0.01)
                 purple_cycle(pixels, wait=0.01)
         
-            brightness_decrease(pixels)
+            # brightness_decrease(pixels)
 
             r.publish("AnimationCompleted", "done")
