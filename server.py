@@ -43,6 +43,7 @@ async def main():
                     print(ps_message)
                     ps_string = json.dumps(ps_message)
                     r.publish('NanoXmasTree', ps_string)
+                    r.lpush("animations", ps_string)
 
 try:
     asyncio.get_event_loop().run_until_complete(main())
