@@ -49,6 +49,7 @@ async def main():
             topic = rec.get("topic", None)
             if topic:
                 message = rec["message"]
+                print(message)
                 if topic == "confirmation" and message['block']['subtype'] == 'send':
                     # We send a message to the redis pub sub to be handled by the client.
                     ps_message = {'sender': message['account'], 'amount': message['amount']}
