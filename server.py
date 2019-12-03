@@ -1,3 +1,5 @@
+#!/root/nanoxmastree/venv/bin/python3
+
 import asyncio
 import configparser
 import json
@@ -28,7 +30,7 @@ async def main():
     # Set up the redis pub sub
     r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, password=REDIS_PW) 
 
-    async with websockets.connect(f"ws://{WS_HOST}:{WS_PORT}") as websocket:
+    async with websockets.connect("ws://{}:{}".format(WS_HOST, WS_PORT)) as websocket:
         await websocket.send(json.dumps(subscription("confirmation", ack=True, options=options)))
         print(await websocket.recv())
     
