@@ -60,6 +60,17 @@ def purple_cycle_successive(pixels, wait=0.1):
         if wait > 0:
             time.sleep(wait)
 
+def pacman_chase(pixels, wait=0.1):
+    for i in range(10, pixels.count()):
+        pixels.set_pixel_rgb( i - 8, 0,0,0   )
+        pixels.set_pixel_rgb(i - 6, 255, 184, 82   )
+        pixels.set_pixel_rgb(i - 4, 255, 184, 255   )
+        pixels.set_pixel_rgb(i - 2, 0, 255, 255   )
+        pixels.set_pixel_rgb(i, 255, 255, 0   )
+        pixels.show()
+        time.sleep(wait)
+
+
 def one_color_sparkle(pixels, wait=0.05):
     count = 0
     while count <180:
@@ -92,64 +103,19 @@ def snow(pixels, wait=0.5):
             time.sleep(wait)
         count = count + 1
 
+def nano_sparkles(pixels, wait=0.1):
+    count = 245
+    while count > 0:
+        for i in range(count, pixels.count()):
+            if random.getrandbits(2) == 1:
+                pixels.set_pixel_rgb(i,74, 144, 226 )
+            else:
+                pixels.set_pixel_rgb(i, 0,0,0   )
 
-def snow_test(pixels, wait=1):
-    for i in range (31, 40):
-        pixels.set_pixel_rgb(i, 255, 255, 255   )
-    pixels.show()
-    time.sleep(wait)
-    #pixels.clear()
-    pixels.show()
-
-    for i in range (81, 90):
-        pixels.set_pixel_rgb(i, 255, 255, 255   )
-    pixels.show()
-    time.sleep(wait)
-    #pixels.clear()
-    pixels.show()
-
-    for i in range (91, 100):
-        pixels.set_pixel_rgb(i, 255, 255, 255   )
-    pixels.show()
-    time.sleep(wait)
-    #pixels.clear()
-    pixels.show()
-
-    for i in range (131, 140):
-        pixels.set_pixel_rgb(i, 255, 255, 255   )
-    pixels.show()
-    time.sleep(wait)
-    #pixels.clear()
-    pixels.show()
-
-    for i in range (161, 170):
-        pixels.set_pixel_rgb(i, 255, 255, 255   )
-    pixels.show()
-    time.sleep(wait)
-    #pixels.clear()
-    pixels.show()
-
-    for i in range (181, 190):
-        pixels.set_pixel_rgb(i, 255, 255, 255   )
-    pixels.show()
-    time.sleep(wait)
-    #pixels.clear()
-    pixels.show()
-
-    for i in range (191, 200):
-        pixels.set_pixel_rgb(i, 255, 255, 255   )
-    pixels.show()
-    time.sleep(wait)
-    #pixels.clear()
-    pixels.show()
-
-    for i in range (211, 220):
-        pixels.set_pixel_rgb(i, 255, 255, 255   )
-    pixels.show()
-    time.sleep(wait)
-    #pixels.clear()
-    pixels.show()
-
+        pixels.show()
+        if wait > 0:
+            time.sleep(wait)
+        count = count - 1
 
 
 def alt_red_green(pixels, wait=1):

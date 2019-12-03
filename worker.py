@@ -5,7 +5,7 @@ import json
 import time
 import configparser
 
-from single import purple_cycle_successive, purple_cycle, rainbow_colors, brightness_decrease, test_pixels, one_color_sparkle, rainbow_cycle, rainbow_cycle_successive, appear_from_back, rainbow_colors_alt, alt_red_green, snow
+from single import purple_cycle_successive, purple_cycle, rainbow_colors, brightness_decrease, test_pixels, one_color_sparkle, rainbow_cycle, rainbow_cycle_successive, appear_from_back, rainbow_colors_alt, alt_red_green, snow, pacman_chase, nano_sparkles
 import Adafruit_WS2801
 import Adafruit_GPIO.SPI as SPI
 import RPi.GPIO as GPIO
@@ -60,9 +60,9 @@ if __name__ == '__main__':
                 rainbow_cycle_successive(pixels, wait=0.05)
                 purple_cycle(pixels, wait=0.01)
 
-            # elif adjusted_amount[-1] == "5":
-                # appear_from_back(pixels, wait=0.001)
-                # purple_cycle(pixels, wait=0.01)
+            elif adjusted_amount[-1] == "5":
+                nano_sparkles(pixels, wait=0.1)
+                purple_cycle(pixels, wait=0.01)
 
             elif adjusted_amount[-1] == "6":
                 alt_red_green(pixels, wait=1)
@@ -70,6 +70,10 @@ if __name__ == '__main__':
 
             elif adjusted_amount[-1] == "7":
                 snow(pixels, wait=0.5)
+                purple_cycle(pixels, wait=0.01)
+
+            elif adjusted_amount[-1] == "8":
+                pacman_chase(pixels, wait=0.1)
                 purple_cycle(pixels, wait=0.01)
 
             # 5 = rainbow sparkle
