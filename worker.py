@@ -26,17 +26,19 @@ SPI_DEVICE = 0
 
 pixels = Adafruit_WS2801.WS2801Pixels(PIXEL_COUNT, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE), gpio=GPIO)
 
-r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, password=REDIS_PW) 
+r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, password=REDIS_PW)
 
 if __name__ == '__main__':
     processing = False
 
     while True:
         if r.llen('XmasQueue') > 0:
-            message_list = r.lrange('XmasQueue', 0, 10)
             message_data = r.lpop('XmasQueue')
+            message_list = r.lrange('XmasQueue', 0, 9)
+            r.publish('AnimationProcessing', message_data)
+            r.publish('PendingAnimations', message_list)
+            
             json_data = json.loads(message_data)
-            print(message_list)
             # We will send the message_list to the web server so it can display the correct information
             print(f'Received notification that {json_data["sender"]} sent {json_data["amount"]} to the christmas tree account from redis queue')
             pixels.clear()

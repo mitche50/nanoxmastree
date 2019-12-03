@@ -23,16 +23,23 @@ def subscription(topic: str, ack: bool=False, options: dict=None):
         data['options'] = options
     return data
 
-async def main():
-    # Connect to websocket and subscribe to the address
-    options = {'accounts': [TREE_ACCOUNT]}
+async def redis_subscribe(p):
+    p.subscribe('AnimationProcessing')
+    p.subscribe('PendingAnimations')
 
-    # Set up the redis pub sub
-    r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, password=REDIS_PW) 
+    while True:
+        message = p.get_message()
+
+        if message and message['type'] == 'message':
+            json_message = json.loads(message['data'].decode('utf-8'))
+
+
+
+async def ws_subscribe(r):
+    options = {'accounts': [TREE_ACCOUNT]}
 
     async with websockets.connect("ws://{}:{}".format(WS_HOST, WS_PORT)) as websocket:
         await websocket.send(json.dumps(subscription("confirmation", ack=True, options=options)))
-        print(await websocket.recv())
     
         while 1:
             rec = json.loads(await websocket.recv())
@@ -42,10 +49,21 @@ async def main():
                 if topic == "confirmation" and message['block']['subtype'] == 'send':
                     # We send a message to the redis pub sub to be handled by the client.
                     ps_message = {'sender': message['account'], 'amount': message['amount']}
-                    print(ps_message)
                     ps_string = json.dumps(ps_message)
                     r.publish('NanoXmasTree', ps_string)
                     r.lpush("animations", ps_string)
+
+
+async def main():
+    # Set up the redis pub sub
+    r = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, password=REDIS_PW)
+    p = r.pubsub()
+
+    await asyncio.gather(
+        ws_subscribe(r),
+        redis_subscribe(p)
+    )
+    
 
 try:
     asyncio.get_event_loop().run_until_complete(main())
