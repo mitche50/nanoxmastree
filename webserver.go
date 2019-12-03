@@ -3,23 +3,25 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 
-	"github.com/gorilla/websocket"
 	"github.com/go-redis/redis"
+	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
 )
 
-type QueuedRequests struct {
-	Address string `json:address`
-	Amount  string `json:amount`
+func init() {
+	// loads values from .env into the system
+	if err := godotenv.Load(); err != nil {
+		log.Print("No .env file found")
+	}
 }
 
-var addr = flag.String("addr", "localhost:8080", "http service address")
-
-var upgrader = websocket.Upgrader{} // use default options
-
 func xmas(w http.ResponseWriter, r *http.Request) {
+	var upgrader = websocket.Upgrader{} // use default options
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -28,43 +30,76 @@ func xmas(w http.ResponseWriter, r *http.Request) {
 	}
 	defer c.Close()
 
+	redisHost, exists := os.LookupEnv("REDIS_HOST")
+	if !exists {
+		redisHost = "localhost"
+	}
+	redisPort, exists := os.LookupEnv("REDIS_PORT")
+	if !exists {
+		redisPort = "6379"
+	}
+	redisPW, exists := os.LookupEnv("REDIS_PW")
+	if !exists {
+		redisPW = ""
+	}
+
 	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
+		Addr:     fmt.Sprintf("%v:%v", redisHost, redisPort),
+		Password: fmt.Sprintf("%v", redisPW), // no password set
+		DB:       0,                          // use default DB
 	})
 	defer client.Close()
 
-	r_data, err := client.LRange("animation", 0, 9).Result()
+	go func() {
+		p := client.Subscribe("PendingAnimations", "AnimationProcessing", "AnimationCompleted")
+		fmt.Println("in goroutine")
+		for {
+			msg, err := p.ReceiveMessage()
+			if err != nil {
+				break
+			}
+
+			fmt.Println(msg.Channel, msg.Payload)
+			switch msg.Channel {
+			case "AnimationProcessing":
+				fmt.Println(msg.Channel, msg.Payload)
+				wsData, _ := json.Marshal(msg.Payload)
+				err = c.WriteMessage(websocket.TextMessage, wsData)
+			case "PendingAnimations":
+				err = c.WriteMessage(websocket.TextMessage, []byte(msg.Payload))
+			case "AnimationCompleted":
+				err = c.WriteMessage(websocket.TextMessage, []byte("done"))
+			}
+		}
+	}()
+
+	rData, err := client.LRange("animations", 0, 9).Result()
 	if err != nil {
 		panic(err)
 	}
-	print(r_data)
+	print(rData)
 
-	test_json, _ := json.Marshal(r_data)
+	testJSON, _ := json.Marshal(rData)
 
-	err = c.WriteMessage(websocket.TextMessage, test_json)
-	
+	err = c.WriteMessage(websocket.TextMessage, testJSON)
+
 	for {
-		mt, message, err := c.ReadMessage()
+		_, message, err := c.ReadMessage()
 		if err != nil {
 			log.Println("read:", err)
 			break
 		}
 		log.Printf("recv: %s", message)
-		err = c.WriteMessage(mt, message)
-		if err != nil {
-			log.Println("write:", err)
-			break
-		}
 	}
 }
 
-
 func main() {
+
+	var addr = flag.String("addr", "localhost:2512", "http service address")
+
 	flag.Parse()
 	log.SetFlags(0)
+
 	http.HandleFunc("/", xmas)
 	log.Fatal(http.ListenAndServe(*addr, nil))
 }
-
