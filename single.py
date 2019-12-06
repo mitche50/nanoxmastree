@@ -60,6 +60,11 @@ def purple_cycle_successive(pixels, wait=0.1):
         if wait > 0:
             time.sleep(wait)
 
+def background(pixels):
+    for i in range(pixels.count()):
+        pixels.set_pixel_rgb(i, 89, 17, 88)
+    pixels.show()
+
 def pacman_chase(pixels, wait=0.1):
     for i in range(10, pixels.count()):
         pixels.set_pixel_rgb( i - 8, 0,0,0   )

@@ -95,13 +95,12 @@ if __name__ == '__main__':
                 elif adjusted_amount[-1] == "8":
                     pacman_chase(pixels, wait=0.1)
                     purple_cycle(pixels, wait=0.01)
-
                 else:
                     purple_cycle_successive(pixels, wait=0.01)
                     purple_cycle(pixels, wait=0.01)
             
-                # brightness_decrease(pixels)
             else:
-                time.sleep(20)
 
+                time.sleep(20)
+ 
             r.publish("AnimationCompleted", "done")
