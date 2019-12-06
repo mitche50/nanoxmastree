@@ -5,7 +5,7 @@ import json
 import time
 import configparser
 
-from single import purple_cycle_successive, purple_cycle, rainbow_colors, brightness_decrease, test_pixels, one_color_sparkle, rainbow_cycle, rainbow_cycle_successive, appear_from_back, rainbow_colors_alt, alt_red_green, snow, pacman_chase, nano_sparkles
+from single import purple_cycle_successive, purple_cycle, rainbow_colors, brightness_decrease, test_pixels, one_color_sparkle, rainbow_cycle, rainbow_cycle_successive, appear_from_back, rainbow_colors_alt, alt_red_green, snow, pacman_chase, nano_sparkles, background
 import Adafruit_WS2801
 import Adafruit_GPIO.SPI as SPI
 import RPi.GPIO as GPIO
@@ -49,7 +49,7 @@ if __name__ == '__main__':
             json_data = json.loads(message_data)
             # We will send the message_list to the web server so it can display the correct information
             print(f'Received notification that {json_data["sender"]} sent {json_data["amount"]} to the christmas tree account from redis queue')
-            time.sleep(30)
+#            time.sleep(30)
             pixels.clear()
             pixels.show()
 
@@ -57,39 +57,57 @@ if __name__ == '__main__':
 
             if adjusted_amount[-1] == "1":
                 rainbow_colors(pixels, wait=0.05)
-                purple_cycle(pixels, wait=0.01)
+                background(pixels)
+
+            # elif adjusted_amount[-2] == "2" and adjusted_amount[-1] == "5":
+            #     rainbow_colors(pixels, wait=0.05)
+            #     background(pixels)
+            #     one_color_sparkle(pixels, wait=0.05)
+            #     background(pixels)
+            #     rainbow_cycle(pixels, wait=0.05)
+            #     background(pixels)
+            #     rainbow_cycle_successive(pixels, wait=0.05)
+            #     background(pixels)
+            #     nano_sparkles(pixels, wait=0.1)
+            #     background(pixels)
+            #     alt_red_green(pixels, wait=1)
+            #     background(pixels)
+            #     snow(pixels, wait=0.5)
+            #     background(pixels)
+            #     pacman_chase(pixels, wait=0.1)
+            #     background(pixels)
 
             elif adjusted_amount[-1] == "2":
                 one_color_sparkle(pixels, wait=0.05)
-                purple_cycle(pixels, wait=0.01)
+                background(pixels)
 
             elif adjusted_amount[-1] == "3":
                 rainbow_cycle(pixels, wait=0.05)
-                purple_cycle(pixels, wait=0.01)
+                background(pixels)
 
             elif adjusted_amount[-1] == "4":
                 rainbow_cycle_successive(pixels, wait=0.05)
-                purple_cycle(pixels, wait=0.01)
+                background(pixels)
 
             elif adjusted_amount[-1] == "5":
                 nano_sparkles(pixels, wait=0.1)
-                purple_cycle(pixels, wait=0.01)
+                background(pixels)
 
             elif adjusted_amount[-1] == "6":
                 alt_red_green(pixels, wait=1)
-                purple_cycle(pixels, wait=0.01)
+                background(pixels)
 
             elif adjusted_amount[-1] == "7":
                 snow(pixels, wait=0.5)
-                purple_cycle(pixels, wait=0.01)
+                background(pixels)
 
             elif adjusted_amount[-1] == "8":
                 pacman_chase(pixels, wait=0.1)
-                purple_cycle(pixels, wait=0.01)
+                background(pixels)
 
             else:
                 purple_cycle_successive(pixels, wait=0.01)
-                purple_cycle(pixels, wait=0.01)
+                background(pixels)
         
             # brightness_decrease(pixels)
 
