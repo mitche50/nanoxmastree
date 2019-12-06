@@ -43,9 +43,13 @@ func xmas(w http.ResponseWriter, r *http.Request) {
 		redisPW = ""
 	}
 
+
+        fmt.Println(redisPW)
+        fmt.Println(fmt.Sprintf("%v:%v", redisHost, redisPort))
+
 	client := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%v:%v", redisHost, redisPort),
-		Password: fmt.Sprintf("%v", redisPW), // no password set
+		Password: redisPW, // no password set
 		DB:       0,                          // use default DB
 	})
 	defer client.Close()
