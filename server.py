@@ -6,6 +6,7 @@ import asyncio
 import configparser
 import json
 import redis
+import requests
 import websockets
 
 # Read config and parse constants
@@ -18,6 +19,7 @@ TREE_ACCOUNT = config.get('nano', 'account')
 REDIS_HOST = config.get('redis', 'host')
 REDIS_PORT = config.get('redis', 'port')
 REDIS_PW = config.get('redis', 'pw')
+NODE_IP = config.get('nano', 'node_ip')
 
 CONVERT_MULTIPLIER = {
     'nano': 1000000000000000000000000000000,
@@ -29,6 +31,17 @@ def subscription(topic: str, ack: bool=False, options: dict=None):
     if options is not None:
         data['options'] = options
     return data
+
+def get_balance(account: str):
+    balance_data = {'action': 'account_balance', 'account': account}
+    balance_data_json = json.dumps(balance_data)
+    r = requests.post(NODE_IP, data=balance_data_json)
+    balance_return = r.json()
+    balance = round((float(balance_return['balance']) / CONVERT_MULTIPLIER['nano']) + (float(balance_return['pending'])) / CONVERT_MULTIPLIER['nano'], 4)
+    print("balance: " + str(balance))
+
+    return str(balance)
+
 
 async def main():
     # Set up the redis pub sub
@@ -49,6 +62,8 @@ async def main():
                     # We send a message to the redis pub sub to be handled by the client.
                     amount = str(Decimal(message['amount']) / CONVERT_MULTIPLIER['nano'])
                     print(amount)
+                    balance = get_balance(TREE_ACCOUNT)
+                    r.set('donations', balance)
                     ps_message = {'sender': message['account'], 'amount': amount}
                     ps_string = json.dumps(ps_message)
                     r.rpush("animations", ps_string)

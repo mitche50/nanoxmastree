@@ -20,6 +20,19 @@ func init() {
 	}
 }
 
+func sendBalance(c *websocket.Conn, client *redis.Client) {
+	// sends the balance to the provided websocket
+	balance, _ := client.Get("donations").Result()
+	balanceMessage := make(map[string]string)
+	balanceMessage["balance"] = balance
+	balanceJSON, _ := json.Marshal(balanceMessage)
+	err := c.WriteMessage(websocket.TextMessage, []byte(balanceJSON))
+	if err != nil {
+		log.Print("websocket error:", err)
+	}
+	return
+}
+
 func xmas(w http.ResponseWriter, r *http.Request) {
 	var upgrader = websocket.Upgrader{} // use default options
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
@@ -64,6 +77,7 @@ func xmas(w http.ResponseWriter, r *http.Request) {
 			case "AnimationProcessing":
 				fmt.Println(msg.Channel, msg.Payload)
 				wsData, _ := json.Marshal(msg.Payload)
+				sendBalance(c, client)
 				err = c.WriteMessage(websocket.TextMessage, wsData)
 			case "PendingAnimations":
 				err = c.WriteMessage(websocket.TextMessage, []byte(msg.Payload))
@@ -82,6 +96,7 @@ func xmas(w http.ResponseWriter, r *http.Request) {
 	testJSON, _ := json.Marshal(rData)
 
 	err = c.WriteMessage(websocket.TextMessage, testJSON)
+	sendBalance(c, client)
 
 	for {
 		_, message, err := c.ReadMessage()
