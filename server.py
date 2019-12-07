@@ -65,7 +65,7 @@ async def main():
                     balance = get_balance(TREE_ACCOUNT)
                     score_check = r.zrange("top-donations", 9, 9, withscores=True)
                     print(score_check)
-                    if len(score_check) is 0:
+                    if len(score_check) < 10:
                         r.zadd("top-donations", {message['account']: amount})
                     elif float(amount) > float(score_check):
                         r.zremrangebyrank("top-donations", 0, 0)
