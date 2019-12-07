@@ -37,7 +37,7 @@ for tx in balance_return['history']:
             client.zadd("top-donations", data)
         elif float(amount) > float(score_check[0][1]):
             print("score is higher, adding and removing ...")
-            client.zpopmin("top-donations", count=1)
+            client.zremrangebyrank("top-donations", 0, 0)
             data = {tx['account']: amount}
             client.zadd("top-donations", data)
         else:
