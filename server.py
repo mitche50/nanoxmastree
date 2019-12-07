@@ -68,7 +68,7 @@ async def main():
                     if len(score_check) is 0:
                         r.zadd("top-donations", {message['account']: amount})
                     elif float(amount) > float(score_check):
-                        r.zpopmin("top-donations", count=1)
+                        r.zremrangebyrank("top-donations", 0, 0)
                         r.zadd("top-donations", {message['account']: amount})
 
                     r.set('donations', balance)
