@@ -63,11 +63,11 @@ async def main():
                     amount = str(Decimal(message['amount']) / CONVERT_MULTIPLIER['nano'])
                     print(amount)
                     balance = get_balance(TREE_ACCOUNT)
-                    score_check = r.zrange("top-donations", 9, 9, withscores=True)
+                    score_check = r.zrange("top-donations", 0, 9, withscores=True)
                     print(score_check)
                     if len(score_check) < 10:
                         r.zadd("top-donations", {message['account']: amount})
-                    elif float(amount) > float(score_check):
+                    elif float(amount) > float(score_check[0][1]):
                         r.zremrangebyrank("top-donations", 0, 0)
                         r.zadd("top-donations", {message['account']: amount})
 
