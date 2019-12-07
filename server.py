@@ -63,6 +63,14 @@ async def main():
                     amount = str(Decimal(message['amount']) / CONVERT_MULTIPLIER['nano'])
                     print(amount)
                     balance = get_balance(TREE_ACCOUNT)
+                    score_check = r.zrange("top-donations", 9, 9, withscores=True)
+                    print(score_check)
+                    if len(score_check) is 0:
+                        r.zadd("top-donations", {message['account']: amount})
+                    elif float(amount) > float(score_check):
+                        r.zpopmin("top-donations", count=1)
+                        r.zadd("top-donations", {message['account']: amount})
+
                     r.set('donations', balance)
                     ps_message = {'sender': message['account'], 'amount': amount}
                     ps_string = json.dumps(ps_message)

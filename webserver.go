@@ -33,6 +33,30 @@ func sendBalance(c *websocket.Conn, client *redis.Client) {
 	return
 }
 
+func sendDonations(c *websocket.Conn, client *redis.Client) {
+	// sends a list of the top 10 donations
+	scores, _ := client.ZRangeWithScores("top-donations", 0, 9).Result()
+	fmt.Println(scores)
+	fmt.Println(len(scores))
+	fmt.Println(scores[0].Member)
+	fmt.Println(scores[0].Score)
+	topDonations := make([]string, len(scores)+1)
+
+	topDonations[0] = "top"
+	sI := 1
+
+	for i := len(scores) - 1; i >= 0; i-- {
+		topDonations[sI] = fmt.Sprintf("%v,%v", scores[i].Member, scores[i].Score)
+		sI++
+	}
+	topJSON, _ := json.Marshal(topDonations)
+	err := c.WriteMessage(websocket.TextMessage, []byte(topJSON))
+	if err != nil {
+		log.Print("websocket error:", err)
+	}
+	return
+}
+
 func xmas(w http.ResponseWriter, r *http.Request) {
 	var upgrader = websocket.Upgrader{} // use default options
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
@@ -56,19 +80,18 @@ func xmas(w http.ResponseWriter, r *http.Request) {
 		redisPW = ""
 	}
 
-
-        fmt.Println(redisPW)
-        fmt.Println(fmt.Sprintf("%v:%v", redisHost, redisPort))
+	fmt.Println(redisPW)
+	fmt.Println(fmt.Sprintf("%v:%v", redisHost, redisPort))
 
 	client := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%v:%v", redisHost, redisPort),
 		Password: redisPW, // no password set
-		DB:       0,                          // use default DB
+		DB:       0,       // use default DB
 	})
 	defer client.Close()
 
 	go func() {
-		p := client.Subscribe("PendingAnimations", "AnimationProcessing", "AnimationCompleted")
+		p := client.Subscribe("PendingAnimations", "AnimationProcessing", "AnimationCompleted", "test")
 		fmt.Println("in goroutine")
 		for {
 			msg, err := p.ReceiveMessage()
@@ -82,11 +105,14 @@ func xmas(w http.ResponseWriter, r *http.Request) {
 				fmt.Println(msg.Channel, msg.Payload)
 				wsData, _ := json.Marshal(msg.Payload)
 				sendBalance(c, client)
+				sendDonations(c, client)
 				err = c.WriteMessage(websocket.TextMessage, wsData)
 			case "PendingAnimations":
 				err = c.WriteMessage(websocket.TextMessage, []byte(msg.Payload))
 			case "AnimationCompleted":
 				err = c.WriteMessage(websocket.TextMessage, []byte("done"))
+			case "test":
+				sendDonations(c, client)
 			}
 		}
 	}()
