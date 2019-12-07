@@ -127,6 +127,7 @@ func xmas(w http.ResponseWriter, r *http.Request) {
 
 	err = c.WriteMessage(websocket.TextMessage, testJSON)
 	sendBalance(c, client)
+	sendDonations(c, client)
 
 	for {
 		_, message, err := c.ReadMessage()
