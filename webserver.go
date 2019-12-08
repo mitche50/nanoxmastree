@@ -23,8 +23,10 @@ func init() {
 func sendBalance(c *websocket.Conn, client *redis.Client) {
 	// sends the balance to the provided websocket
 	balance, _ := client.Get("donations").Result()
+	fiat, _ := client.Get("donations-fiat").Result()
 	balanceMessage := make(map[string]string)
 	balanceMessage["balance"] = balance
+	balanceMessage["fiat"] = fiat
 	balanceJSON, _ := json.Marshal(balanceMessage)
 	err := c.WriteMessage(websocket.TextMessage, []byte(balanceJSON))
 	if err != nil {

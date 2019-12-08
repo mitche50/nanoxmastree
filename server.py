@@ -32,15 +32,51 @@ def subscription(topic: str, ack: bool=False, options: dict=None):
         data['options'] = options
     return data
 
+
+def get_fiat_conversion(symbol, crypto_currency, fiat_amount):
+    """
+    Get the current fiat price conversion for the provided fiat:crypto pair
+    """
+    
+    fiat = symbol.lower()
+    crypto_currency = crypto_currency.lower()
+    post_url = 'https://api.coingecko.com/api/v3/coins/{}'.format(crypto_currency)
+    try:
+        # Retrieve price conversion from API
+        response = requests.get(post_url)
+        response_json = json.loads(response.text)
+        price = Decimal(response_json['market_data']['current_price'][fiat])
+        # Find value of 0.01 in the retrieved crypto
+        penny_value = Decimal(0.01) / price
+        # Find precise amount of the fiat amount in crypto
+        precision = 1
+        crypto_value = Decimal(fiat_amount) * price
+        # Find the precision of 0.01 in crypto
+        crypto_convert = precision * penny_value
+        while Decimal(crypto_convert) < 1:
+            precision *= 10
+            crypto_convert = precision * penny_value
+        # Round the expected amount to the nearest 0.01
+        temp_convert = crypto_value * precision
+        temp_convert = str(round(temp_convert))
+        final_convert = Decimal(temp_convert) / Decimal(str(precision))
+
+        return final_convert
+    except Exception as e:
+        print("Exception converting fiat price to crypto price")
+        print("{}".format(e))
+        raise e
+
+
 def get_balance(account: str):
     balance_data = {'action': 'account_balance', 'account': account}
     balance_data_json = json.dumps(balance_data)
     r = requests.post(NODE_IP, data=balance_data_json)
     balance_return = r.json()
     balance = round((float(balance_return['balance']) / CONVERT_MULTIPLIER['nano']) + (float(balance_return['pending'])) / CONVERT_MULTIPLIER['nano'], 4)
-    print("balance: " + str(balance))
+    gbp_amount = get_fiat_conversion('gbp', 'nano', balance)
 
-    return str(balance)
+    return str(balance), str(gbp_amount)
 
 
 async def main():
@@ -62,7 +98,7 @@ async def main():
                     # We send a message to the redis pub sub to be handled by the client.
                     amount = str(Decimal(message['amount']) / CONVERT_MULTIPLIER['nano'])
                     print(amount)
-                    balance = get_balance(TREE_ACCOUNT)
+                    balance, gbp_amount = get_balance(TREE_ACCOUNT)
                     score_check = r.zrange("top-donations", 0, 9, withscores=True)
                     print(score_check)
                     if len(score_check) < 10:
@@ -72,6 +108,7 @@ async def main():
                         r.zadd("top-donations", {message['account']: amount})
 
                     r.set('donations', balance)
+                    r.set('donations-fiat', gbp_amount)
                     ps_message = {'sender': message['account'], 'amount': amount}
                     ps_string = json.dumps(ps_message)
                     r.rpush("animations", ps_string)
