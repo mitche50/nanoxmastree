@@ -8,6 +8,7 @@ import json
 import redis
 import requests
 import websockets
+import MySQLdb
 
 # Read config and parse constants
 config = configparser.ConfigParser()
@@ -20,6 +21,12 @@ REDIS_HOST = config.get('redis', 'host')
 REDIS_PORT = config.get('redis', 'port')
 REDIS_PW = config.get('redis', 'pw')
 NODE_IP = config.get('nano', 'node_ip')
+
+# DB connection settings
+DB_HOST = config.get('mysql', 'host')
+DB_USER = config.get('mysql', 'user')
+DB_PW = config.get('mysql', 'password')
+DB_SCHEMA = config.get('mysql', 'schema')
 
 CONVERT_MULTIPLIER = {
     'nano': 1000000000000000000000000000000,
@@ -99,13 +106,13 @@ async def main():
                     amount = str(Decimal(message['amount']) / CONVERT_MULTIPLIER['nano'])
                     print(amount)
                     balance, gbp_amount = get_balance(TREE_ACCOUNT)
-                    score_check = r.zrange("top-donations", 0, 9, withscores=True)
-                    print(score_check)
-                    if len(score_check) < 10:
-                        r.zadd("top-donations", {message['account']: amount})
-                    elif float(amount) > float(score_check[0][1]):
-                        r.zremrangebyrank("top-donations", 0, 0)
-                        r.zadd("top-donations", {message['account']: amount})
+
+                    db = MySQLdb.connect(host=DB_HOST, port=3306, user=DB_USER, passwd=DB_PW, db=DB_SCHEMA, use_unicode=True,
+                        charset="utf8mb4")
+                    db_cursor = db.cursor()
+                    db_cursor.execute("insert into xmas_donations (address, amount) VALUES (%s, %s);", [message['account'], amount])
+                    db.commit()
+                    db_cursor.close()
 
                     r.set('donations', balance)
                     r.set('donations-fiat', gbp_amount)

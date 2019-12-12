@@ -8,10 +8,18 @@ import (
 	"net/http"
 	"os"
 
+	"database/sql"
+
 	"github.com/go-redis/redis"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 )
+
+type donationRecord struct {
+	Address string
+	Amount  string
+}
 
 func init() {
 	// loads values from .env into the system
@@ -35,24 +43,37 @@ func sendBalance(c *websocket.Conn, client *redis.Client) {
 	return
 }
 
-func sendDonations(c *websocket.Conn, client *redis.Client) {
+func sendDonations(c *websocket.Conn, db *sql.DB) {
 	// sends a list of the top 10 donations
-	scores, _ := client.ZRangeWithScores("top-donations", 0, 9).Result()
-	fmt.Println(scores)
-	fmt.Println(len(scores))
-	fmt.Println(scores[0].Member)
-	fmt.Println(scores[0].Score)
-	topDonations := make([]string, len(scores)+1)
+	var (
+		account string
+		amount  string
+	)
+	rows, err := db.Query("select address, sum(amount) from xmas.xmas_donations group by address order by sum(amount) DESC limit 10;")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
 
+	topDonations := make([]string, 11)
 	topDonations[0] = "top"
 	sI := 1
 
-	for i := len(scores) - 1; i >= 0; i-- {
-		topDonations[sI] = fmt.Sprintf("%v,%v", scores[i].Member, scores[i].Score)
+	for rows.Next() {
+		err := rows.Scan(&account, &amount)
+		if err != nil {
+			log.Fatal(err)
+		}
+		topDonations[sI] = fmt.Sprintf("%v,%v", account, amount)
 		sI++
 	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	topJSON, _ := json.Marshal(topDonations)
-	err := c.WriteMessage(websocket.TextMessage, []byte(topJSON))
+	err = c.WriteMessage(websocket.TextMessage, []byte(topJSON))
 	if err != nil {
 		log.Print("websocket error:", err)
 	}
@@ -81,8 +102,29 @@ func xmas(w http.ResponseWriter, r *http.Request) {
 	if !exists {
 		redisPW = ""
 	}
+	mySQLHost, exists := os.LookupEnv("MYSQL_HOST")
+	if !exists {
+		mySQLHost = "localhost"
+	}
+	mySQLUser, exists := os.LookupEnv("MYSQL_USER")
+	if !exists {
+		mySQLUser = "test"
+	}
+	mySQLPW, exists := os.LookupEnv("MYSQL_PW")
+	if !exists {
+		mySQLPW = ""
+	}
+	mySQLDB, exists := os.LookupEnv("MYSQL_DB")
+	if !exists {
+		mySQLDB = "xmas"
+	}
 
-	fmt.Println(redisPW)
+	db, err := sql.Open("mysql", fmt.Sprintf("%v:%v@tcp(%v:3306)/%v", mySQLUser, mySQLPW, mySQLHost, mySQLDB))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
 	fmt.Println(fmt.Sprintf("%v:%v", redisHost, redisPort))
 
 	client := redis.NewClient(&redis.Options{
@@ -107,14 +149,14 @@ func xmas(w http.ResponseWriter, r *http.Request) {
 				fmt.Println(msg.Channel, msg.Payload)
 				wsData, _ := json.Marshal(msg.Payload)
 				sendBalance(c, client)
-				sendDonations(c, client)
+				sendDonations(c, db)
 				err = c.WriteMessage(websocket.TextMessage, wsData)
 			case "PendingAnimations":
 				err = c.WriteMessage(websocket.TextMessage, []byte(msg.Payload))
 			case "AnimationCompleted":
 				err = c.WriteMessage(websocket.TextMessage, []byte("done"))
 			case "test":
-				sendDonations(c, client)
+				sendDonations(c, db)
 			}
 		}
 	}()
@@ -129,7 +171,7 @@ func xmas(w http.ResponseWriter, r *http.Request) {
 
 	err = c.WriteMessage(websocket.TextMessage, testJSON)
 	sendBalance(c, client)
-	sendDonations(c, client)
+	sendDonations(c, db)
 
 	for {
 		_, message, err := c.ReadMessage()
